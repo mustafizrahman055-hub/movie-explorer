@@ -1,81 +1,187 @@
-import { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import SearchBar from './components/SearchBar';
+import MovieGrid from './components/MovieGrid';
+import MovieModal from './components/MovieModal';
+import Footer from './components/Footer';
+import { fetchAllShows, searchShows } from './services/tvmazeApi';
+import { Sparkles, Film, ArrowRight } from 'lucide-react';
 
-function App() {
-  const [movies] = useState([
-    {
-      id: 1,
-      title: "Superman",
-      year: "1988",
-      language: "English",
-      rating: "7.2",
-      poster: "https://image.tmdb.org/t/p/w500/d7px1FQxW4tngBACCxdHxEmVxeF.jpg"
-    },
-    {
-      id: 2,
-      title: "Superman & Lois",
-      year: "2021",
-      language: "English",
-      rating: "7.8",
-      poster: "https://image.tmdb.org/t/p/w500/vlv1gn98GqOU1PE66UKUM88YVY5.jpg"
+export default function App() {
+  const [activePage, setActivePage] = useState('home'); // 'home' | 'movies'
+  const [allShows, setAllShows] = useState([]);
+  const [displayedShows, setDisplayedShows] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('All');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedShow, setSelectedShow] = useState(null);
+
+  // Initial Data Fetch from TVMaze API (/shows)
+  useEffect(() => {
+    async function loadInitialShows() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await fetchAllShows();
+        setAllShows(data || []);
+        setDisplayedShows(data || []);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to fetch movies from TVMaze database.');
+      } finally {
+        setIsLoading(false);
+      }
     }
-  ]);
+    loadInitialShows();
+  }, []);
+
+  // Handle Search Submission against TVMaze (/search/shows?q=:query)
+  const handleSearchSubmit = async (query) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setDisplayedShows(allShows);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const results = await searchShows(query);
+      setDisplayedShows(results || []);
+    } catch (err) {
+      console.error(err);
+      setError(`Failed to search for "${query}".`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Filter shows by selected genre tag
+  const filteredShows = useMemo(() => {
+    if (selectedGenre === 'All') return displayedShows;
+    return displayedShows.filter(
+      (show) => show.genres && show.genres.includes(selectedGenre)
+    );
+  }, [displayedShows, selectedGenre]);
+
+  // Navigate to Movies listing view
+  const navigateToMovies = () => {
+    setActivePage('movies');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      
+      {/* Global Navbar */}
+      <Navbar 
+        activePage={activePage} 
+        setActivePage={setActivePage} 
+      />
+
+      {/* Main Content Area */}
+      <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
-        <h1 className="text-4xl md:text-5xl font-bold text-center text-blue-500 mb-8 tracking-wider">
-          Movie Explorer
-        </h1>
+        {activePage === 'home' ? (
+          /* ================= HOME PAGE ================= */
+          <div className="space-y-12">
+            
+            {/* Hero Section */}
+            <Hero onExploreClick={navigateToMovies} />
 
-        <div className="flex justify-center items-center mb-10">
-          <input 
-            type="text" 
-            className="px-4 py-3 w-64 md:w-96 rounded-l-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400" 
-            placeholder="Search movies..." 
-          />
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-r-lg font-semibold transition-all">
-            Search
-          </button>
-        </div>
+            {/* Featured Showcase Section */}
+            <section className="space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-indigo-400" />
+                    <span>Featured Shows</span>
+                  </h2>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Handpicked top-rated movies and series popular around the globe.
+                  </p>
+                </div>
 
-        <h2 className="text-2xl font-semibold mb-6 text-center md:text-left border-l-4 border-blue-500 pl-3">
-          Search Results
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-          {movies.map((movie) => (
-            <div key={movie.id} className="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300 flex flex-col">
-              <img 
-                src={movie.poster} 
-                alt={movie.title} 
-                className="w-full h-80 object-cover" 
-              />
-              
-              <div className="p-5 flex flex-col flex-grow items-center text-center">
-                <span className="text-yellow-400 font-bold mb-2 text-sm tracking-wide">
-                  ★ {movie.rating}
-                </span>
-                
-                <h3 className="text-lg font-semibold mb-1 line-clamp-1">
-                  {movie.title}
-                </h3>
-                
-                <p className="text-gray-400 text-sm mb-4">
-                  {movie.year} • {movie.language}
-                </p>
-                
-                <button className="mt-auto w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition-colors">
-                  View Details
+                <button
+                  onClick={navigateToMovies}
+                  className="inline-flex items-center space-x-2 text-indigo-400 hover:text-indigo-300 font-semibold text-sm group"
+                >
+                  <span>Browse All Movies</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
-            </div>
-          ))}
-        </div>
 
-      </div>
+              {/* Grid preview of top shows */}
+              <MovieGrid 
+                shows={allShows.slice(0, 8)}
+                isLoading={isLoading}
+                error={error}
+                onSelectDetails={(show) => setSelectedShow(show)}
+              />
+            </section>
+
+          </div>
+        ) : (
+          /* ================= MOVIE LISTING PAGE ================= */
+          <div className="space-y-8 animate-fadeIn">
+            
+            {/* Search Header */}
+            <div className="text-center max-w-2xl mx-auto space-y-3 mb-6">
+              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                Browse & Search <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400">Movies</span>
+              </h1>
+              <p className="text-slate-400 text-sm sm:text-base">
+                Search through thousands of titles in our database using title queries.
+              </p>
+            </div>
+
+            {/* Search Bar & Genre Filters Component */}
+            <SearchBar 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onSearchSubmit={handleSearchSubmit}
+              selectedGenre={selectedGenre}
+              setSelectedGenre={setSelectedGenre}
+            />
+
+            {/* Grid Header Info */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                <Film className="w-5 h-5 text-indigo-400" />
+                {searchQuery ? (
+                  <span>Search Results for "<span className="text-indigo-400">{searchQuery}</span>"</span>
+                ) : (
+                  <span>All Movies & TV Shows ({filteredShows.length})</span>
+                )}
+              </h2>
+            </div>
+
+            {/* Movie Grid */}
+            <MovieGrid 
+              shows={filteredShows}
+              isLoading={isLoading}
+              error={error}
+              onSelectDetails={(show) => setSelectedShow(show)}
+            />
+
+          </div>
+        )}
+
+      </main>
+
+      {/* Movie Details Modal */}
+      {selectedShow && (
+        <MovieModal 
+          show={selectedShow} 
+          onClose={() => setSelectedShow(null)} 
+        />
+      )}
+
+      {/* Global Footer */}
+      <Footer />
+
     </div>
   );
 }
-
-export default App;

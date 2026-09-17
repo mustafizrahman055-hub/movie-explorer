@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clapperboard, Github, Twitter, Globe, Heart } from 'lucide-react';
+import { Clapperboard, Code, Share2, Globe, Heart } from 'lucide-react';
 
 /**
  * Footer Component
@@ -43,7 +43,7 @@ export default function Footer() {
               className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-slate-700 transition-all duration-200"
               aria-label="GitHub Repository"
             >
-              <Github className="w-5 h-5" />
+              <Code className="w-5 h-5" />
             </a>
             <a
               href="https://twitter.com"
@@ -52,7 +52,7 @@ export default function Footer() {
               className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-slate-700 transition-all duration-200"
               aria-label="Twitter"
             >
-              <Twitter className="w-5 h-5" />
+              <Share2 className="w-5 h-5" />
             </a>
             <a
               href="https://www.tvmaze.com/api"
