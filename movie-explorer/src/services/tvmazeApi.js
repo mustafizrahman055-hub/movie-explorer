@@ -1,68 +1,36 @@
-/**
- * TVMaze API Service
- * Base URL: https://api.tvmaze.com
- */
-
 const BASE_URL = 'https://api.tvmaze.com';
 
-/**
- * Fetch all top/trending shows
- * @returns {Promise<Array>} List of show objects
- */
 export async function fetchAllShows() {
   try {
-    const response = await fetch(`${BASE_URL}/shows`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch shows: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data;
+    const res = await fetch(`${BASE_URL}/shows`);
+    if (!res.ok) throw new Error('Failed to fetch shows');
+    return await res.json();
   } catch (error) {
-    console.error('Error fetching all shows:', error);
+    console.error('API Error:', error);
     throw error;
   }
 }
 
-/**
- * Search shows by title query
- * Endpoint: GET /search/shows?q=:query
- * @param {string} query - The search query term
- * @returns {Promise<Array>} Array of { score, show } items
- */
 export async function searchShows(query) {
-  if (!query || !query.trim()) {
-    return [];
-  }
+  if (!query?.trim()) return [];
   try {
-    const response = await fetch(`${BASE_URL}/search/shows?q=${encodeURIComponent(query.trim())}`);
-    if (!response.ok) {
-      throw new Error(`Search failed: ${response.statusText}`);
-    }
-    const data = await response.json();
-    // Return standard show objects mapped from the search result format
+    const res = await fetch(`${BASE_URL}/search/shows?q=${encodeURIComponent(query.trim())}`);
+    if (!res.ok) throw new Error('Search failed');
+    const data = await res.json();
     return data.map((item) => item.show);
   } catch (error) {
-    console.error('Error searching shows:', error);
+    console.error('Search API Error:', error);
     throw error;
   }
 }
 
-/**
- * Fetch detailed show information including cast details
- * Endpoint: GET /shows/:id?embed=cast
- * @param {number|string} showId 
- * @returns {Promise<Object>} Show object with _embedded.cast
- */
-export async function fetchShowDetails(showId) {
+export async function fetchShowDetails(id) {
   try {
-    const response = await fetch(`${BASE_URL}/shows/${showId}?embed=cast`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch show details: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data;
+    const res = await fetch(`${BASE_URL}/shows/${id}?embed=cast`);
+    if (!res.ok) throw new Error('Failed to fetch show details');
+    return await res.json();
   } catch (error) {
-    console.error(`Error fetching show ${showId}:`, error);
+    console.error('Details API Error:', error);
     throw error;
   }
 }
